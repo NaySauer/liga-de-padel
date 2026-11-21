@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ranking - Liga de Pádel</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="eyebrow">PLATAFORMA DE TORNEOS</div>
+      <h1>🎾 RANKING LIGA DE PÁDEL</h1>
+      <p>Tabla de posiciones por categoría</p>
+    </div>
+    <div class="trophy">🏆</div>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="section-head">
+    <div>
+      <h2>RANKING</h2>
+      <p>Posiciones actualizadas de cada categoría.</p>
+    </div>
+    <button class="button light" onclick="window.location.href='/'">
+      VOLVER
+    </button>
+  </div>
+
+  <div class="auth-card">
+
+    <label class="form-label" for="rankingCategory">
+      Seleccionar categoría
+    </label>
+
+    <select class="field" id="rankingCategory">
+      <option value="">Seleccioná una categoría</option>
+    </select>
+
+    <div id="rankingTitle" style="text-align:center; margin:25px 0;">
+      <h2>RANKING LIGA DE PÁDEL</h2>
+      <h3 id="rankingCategoryName">Seleccioná una categoría</h3>
+    </div>
+
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse; text-align:center;">
+        <thead>
+          <tr>
+            <th style="text-align:left;">PAREJA</th>
+            <th>PJ</th>
+            <th>PG</th>
+            <th>PP</th>
+            <th>PTOS</th>
+          </tr>
+        </thead>
+        <tbody id="rankingTable">
+          <tr>
+            <td colspan="5" style="padding:20px;">
+              Seleccioná una categoría para ver el ranking.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <div class="auth-card" style="margin-top:20px;">
+    <h3>SISTEMA DE PUNTUACIÓN</h3>
+
+    <div style="overflow-x:auto;">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr>
+            <th style="text-align:left;">RESULTADO</th>
+            <th>PUNTOS</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Victoria en 2 sets</td>
+            <td><strong>+3</strong></td>
+          </tr>
+          <tr>
+            <td>Victoria en 3 sets</td>
+            <td><strong>+2</strong></td>
+          </tr>
+          <tr>
+            <td>Derrota en 3 sets</td>
+            <td><strong>+1</strong></td>
+          </tr>
+          <tr>
+            <td>Derrota en 2 sets</td>
+            <td><strong>0</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Liga de Pádel · Ranking oficial
+</footer>
+
+<script src="/ranking.js"></script>
+
+</body>
+</html>
