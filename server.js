@@ -7,8 +7,9 @@ const session = require("express-session");
 const initSqlJs = require("sql.js");
 
 const app = express();
+app.set("trust proxy", 1);
 const PORT = Number(process.env.PORT || 3000);
-const DB_DIR = path.join(__dirname, "data");
+const DB_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 const DB_FILE = path.join(DB_DIR, "liga-padel.sqlite");
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "CambiarAdmin123!";
@@ -23,7 +24,7 @@ app.use(session({
   cookie: {
     httpOnly: true,
     sameSite: "lax",
-    secure: false,
+    secure: process.env.NODE_ENV === "production",
     maxAge: 1000 * 60 * 60 * 8
   }
 }));
