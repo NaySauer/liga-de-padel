@@ -277,6 +277,35 @@ function requireAdmin(req, res, next) {
 // =====================================================
 // AUTENTICACIÓN
 // =====================================================
+async function verifyTurnstile(token, ip) {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+
+  if (!secret || !token) return false;
+
+  try {
+    const response = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+          secret,
+          response: token,
+          remoteip: ip || ""
+        })
+      }
+    );
+
+    const data = await response.json();
+    return data.success === true;
+
+  } catch (error) {
+    console.error("Error verificando Turnstile:", error.message);
+    return false;
+  }
+}
 
 app.get("/api/auth/me", (req, res) => {
   if (!req.session.userId) {
@@ -296,6 +325,16 @@ app.get("/api/auth/me", (req, res) => {
 });
 
 app.post("/api/auth/register", async (req, res) => {
+    const captchaValid = await verifyTurnstile(
+    req.body.turnstileToken,
+    req.ip
+  );
+
+  if (!captchaValid) {
+    return res.status(400).json({
+      error: "La verificación de seguridad falló. Intentá nuevamente."
+    });
+  }
   const fullName = cleanName(req.body.fullName);
   const password = typeof req.body.password === "string"
     ? req.body.password
@@ -343,6 +382,16 @@ app.post("/api/auth/register", async (req, res) => {
 });
 
 app.post("/api/auth/login", async (req, res) => {
+    const captchaValid = await verifyTurnstile(
+    req.body.turnstileToken,
+    req.ip
+  );
+
+  if (!captchaValid) {
+    return res.status(400).json({
+      error: "La verificación de seguridad falló. Intentá nuevamente."
+    });
+  }
   const username = typeof req.body.username === "string"
     ? req.body.username.trim()
     : "";

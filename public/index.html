@@ -1,66 +1,198 @@
+
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#123c36"><title>Liga de Pádel</title><link rel="stylesheet" href="/styles.css"></head>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#123c36">
+<title>Liga de Pádel</title>
+<link rel="stylesheet" href="/styles.css">
+
+<script>
+window.loginTurnstileToken = "";
+window.registerTurnstileToken = "";
+window.loginTurnstileId = null;
+window.registerTurnstileId = null;
+
+window.onTurnstileLoad = function () {
+  window.loginTurnstileId = turnstile.render("#loginTurnstile", {
+    sitekey: "0x4AAAAAAGTjRf4Z1ij39Wi_",
+    callback: function (token) {
+      window.loginTurnstileToken = token;
+    },
+    "expired-callback": function () {
+      window.loginTurnstileToken = "";
+    },
+    "error-callback": function () {
+      window.loginTurnstileToken = "";
+    }
+  });
+
+  window.registerTurnstileId = turnstile.render("#registerTurnstile", {
+    sitekey: "0x4AAAAAAGTjRf4Z1ij39Wi_",
+    callback: function (token) {
+      window.registerTurnstileToken = token;
+    },
+    "expired-callback": function () {
+      window.registerTurnstileToken = "";
+    },
+    "error-callback": function () {
+      window.registerTurnstileToken = "";
+    }
+  });
+};
+</script>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit" async defer></script>
+</head>
+
 <body>
-<header class="hero"><div class="hero-inner"><div><div class="eyebrow">PLATAFORMA DE TORNEOS</div><h1>🎾 Liga de Pádel</h1><p>Desafíos · Categorías · Ranking</p></div><div class="trophy">🏆</div></div></header>
-<main class="container">
-<section id="authView" class="auth-wrap">
- <div class="auth-card">
-  <div class="auth-title"><h2>Bienvenido/a</h2><p>Ingresá a tu cuenta para continuar.</p></div>
-  <div class="auth-tabs"><button class="auth-tab active" id="loginTab">Iniciar sesión</button><button class="auth-tab" id="registerTab">Registrarme</button></div>
-  <form id="loginForm"><label class="form-label" for="loginUser">Usuario · nombre y apellido</label><input class="field" id="loginUser" autocomplete="username" placeholder="Ej. Juan Pérez" required><label class="form-label" for="loginPassword">Contraseña</label><input class="field" id="loginPassword" type="password" autocomplete="current-password" placeholder="Tu contraseña" required><button class="button primary full" type="submit">INGRESAR</button><p class="form-note">El administrador también ingresa desde acá usando el usuario <b>admin</b>.</p></form>
-  <form id="registerForm" class="hidden"><label class="form-label" for="registerName">Nombre y apellido</label><input class="field" id="registerName" autocomplete="name" placeholder="Ej. Juan Pérez" required minlength="5"><label class="form-label" for="registerPassword">Crear contraseña</label><input class="field" id="registerPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres" required><label class="form-label" for="registerPassword2">Repetir contraseña</label><input class="field" id="registerPassword2" type="password" autocomplete="new-password" minlength="8" placeholder="Repetí tu contraseña" required><button class="button primary full" type="submit">CREAR CUENTA</button><p class="form-note">Tu cuenta quedará pendiente hasta que la organización la apruebe.</p></form>
- </div>
-</section>
-<section id="pendingView" class="notice-wrap hidden"><div class="notice-card"><div class="notice-icon">⏳</div><h2>Cuenta pendiente de aprobación</h2><p>Tu registro se realizó correctamente. Cuando la organización apruebe tu cuenta, vas a poder ingresar a los torneos.</p><button id="pendingLogout" class="button light">Cerrar sesión</button></div></section>
-<section id="appView" class="hidden">
- <div class="welcome-row"><div><span class="eyebrow dark" id="roleLabel">JUGADOR</span><h2 id="welcomeName">Hola</h2><p id="welcomeText">Bienvenido/a a la Liga de Pádel.</p></div><button class="button light small" id="logoutButton">Salir</button></div>
- <div id="adminPanel" class="hidden">
-  <div class="section-head"><div><h2>Administración</h2><p>Revisá y aprobá las solicitudes de registro.</p></div><button class="button light small" id="refreshUsers">Actualizar</button></div>
-  <div class="stats"><div><strong id="pendingCount">0</strong><span>Pendientes</span></div><div><strong id="approvedCount">0</strong><span>Aprobados</span></div><div><strong id="rejectedCount">0</strong><span>Rechazados</span></div></div>
-  <div id="usersList" class="user-list"></div>
-
-<div class="section-head">
-  <div>
-    <h2>Gestión de torneos</h2>
-    <p>Creá torneos y administrá sus etapas.</p>
-  </div>
-</div>
-
-<div class="auth-card">
-  <h3>Crear torneo</h3>
-  <form id="tournamentForm">
-    <label class="form-label" for="tournamentName">Nombre del torneo</label>
-    <input class="field" id="tournamentName" required placeholder="Ej. Liga de Pádel Noviembre">
-
-    <label class="form-label" for="tournamentDescription">Descripción</label>
-    <textarea class="field" id="tournamentDescription" placeholder="Información del torneo"></textarea>
-
-    <label class="form-label" for="tournamentStart">Fecha de inicio</label>
-    <input class="field" id="tournamentStart" type="date">
-
-    <label class="form-label" for="tournamentEnd">Fecha de finalización</label>
-    <input class="field" id="tournamentEnd" type="date">
-
-    <button class="button primary full" type="submit">CREAR TORNEO</button>
-  </form>
-</div>
-
-<div id="adminTournamentsList" class="user-list"></div>
-
-  <div class="admin-note"><b>Próximo paso:</b> desde este panel vamos a poder crear torneos, habilitar categorías y gestionar inscripciones.</div>
- </div>
- 
-<div id="playerPanel" class="hidden">
-  <div class="section-head">
+<header class="hero">
+  <div class="hero-inner">
     <div>
-      <h2>TORNEOS</h2>
-      <p>Conocé los torneos disponibles.</p>
+      <div class="eyebrow">PLATAFORMA DE TORNEOS</div>
+      <h1>🎾 Liga de Pádel</h1>
+      <p>Desafíos · Categorías · Ranking</p>
     </div>
+    <div class="trophy">🏆</div>
   </div>
-  <div id="playerTournaments"></div>
-</div>
+</header>
+
+<main class="container">
+
+<section id="authView" class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-title">
+      <h2>Bienvenido/a</h2>
+      <p>Ingresá a tu cuenta para continuar.</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="loginTab">Iniciar sesión</button>
+      <button class="auth-tab" id="registerTab">Registrarme</button>
+    </div>
+
+    <form id="loginForm">
+      <label class="form-label" for="loginUser">Usuario · nombre y apellido</label>
+      <input class="field" id="loginUser" autocomplete="username" placeholder="Ej. Juan Pérez" required>
+
+      <label class="form-label" for="loginPassword">Contraseña</label>
+      <input class="field" id="loginPassword" type="password" autocomplete="current-password" placeholder="Tu contraseña" required>
+
+      <div id="loginTurnstile"></div>
+
+      <button class="button primary full" type="submit">INGRESAR</button>
+      <p class="form-note">El administrador también ingresa desde acá usando el usuario <b>admin</b>.</p>
+    </form>
+
+    <form id="registerForm" class="hidden">
+      <label class="form-label" for="registerName">Nombre y apellido</label>
+      <input class="field" id="registerName" autocomplete="name" placeholder="Ej. Juan Pérez" required minlength="5">
+
+      <label class="form-label" for="registerPassword">Crear contraseña</label>
+      <input class="field" id="registerPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Mínimo 8 caracteres" required>
+
+      <label class="form-label" for="registerPassword2">Repetir contraseña</label>
+      <input class="field" id="registerPassword2" type="password" autocomplete="new-password" minlength="8" placeholder="Repetí tu contraseña" required>
+
+      <div id="registerTurnstile"></div>
+
+      <button class="button primary full" type="submit">CREAR CUENTA</button>
+      <p class="form-note">Tu cuenta quedará pendiente hasta que la organización la apruebe.</p>
+    </form>
+  </div>
+</section>
+
+<section id="pendingView" class="notice-wrap hidden">
+  <div class="notice-card">
+    <div class="notice-icon">⏳</div>
+    <h2>Cuenta pendiente de aprobación</h2>
+    <p>Tu registro se realizó correctamente. Cuando la organización apruebe tu cuenta, vas a poder ingresar a los torneos.</p>
+    <button id="pendingLogout" class="button light">Cerrar sesión</button>
+  </div>
+</section>
+
+<section id="appView" class="hidden">
+
+  <div class="welcome-row">
+    <div>
+      <span class="eyebrow dark" id="roleLabel">JUGADOR</span>
+      <h2 id="welcomeName">Hola</h2>
+      <p id="welcomeText">Bienvenido/a a la Liga de Pádel.</p>
+    </div>
+    <button class="button light small" id="logoutButton">Salir</button>
+  </div>
+
+  <div id="adminPanel" class="hidden">
+
+    <div class="section-head">
+      <div>
+        <h2>Administración</h2>
+        <p>Revisá y aprobá las solicitudes de registro.</p>
+      </div>
+      <button class="button light small" id="refreshUsers">Actualizar</button>
+    </div>
+
+    <div class="stats">
+      <div><strong id="pendingCount">0</strong><span>Pendientes</span></div>
+      <div><strong id="approvedCount">0</strong><span>Aprobados</span></div>
+      <div><strong id="rejectedCount">0</strong><span>Rechazados</span></div>
+    </div>
+
+    <div id="usersList" class="user-list"></div>
+
+    <div class="section-head">
+      <div>
+        <h2>Gestión de torneos</h2>
+        <p>Creá torneos y administrá sus etapas.</p>
+      </div>
+    </div>
+
+    <div class="auth-card">
+      <h3>Crear torneo</h3>
+      <form id="tournamentForm">
+        <label class="form-label" for="tournamentName">Nombre del torneo</label>
+        <input class="field" id="tournamentName" required placeholder="Ej. Liga de Pádel Noviembre">
+
+        <label class="form-label" for="tournamentDescription">Descripción</label>
+        <textarea class="field" id="tournamentDescription" placeholder="Información del torneo"></textarea>
+
+        <label class="form-label" for="tournamentStart">Fecha de inicio</label>
+        <input class="field" id="tournamentStart" type="date">
+
+        <label class="form-label" for="tournamentEnd">Fecha de finalización</label>
+        <input class="field" id="tournamentEnd" type="date">
+
+        <button class="button primary full" type="submit">CREAR TORNEO</button>
+      </form>
+    </div>
+
+    <div id="adminTournamentsList" class="user-list"></div>
+
+    <div class="admin-note">
+      <b>Próximo paso:</b> desde este panel vamos a poder crear torneos, habilitar categorías y gestionar inscripciones.
+    </div>
+
+  </div>
+
+  <div id="playerPanel" class="hidden">
+    <div class="section-head">
+      <div>
+        <h2>TORNEOS</h2>
+        <p>Conocé los torneos disponibles.</p>
+      </div>
+    </div>
+    <div id="playerTournaments"></div>
+  </div>
 
 </section>
+
 <div id="toast" class="toast" role="status"></div>
+
 <footer>Acceso de jugadores y administración · Liga de Pádel</footer>
-</main><script src="/app.js"></script></body></html>
+
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>

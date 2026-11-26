@@ -25,7 +25,29 @@ async function api(url, options = {}) {
 
   return data;
 }
+function getTurnstileToken(type) {
+  return type === "login"
+    ? window.loginTurnstileToken
+    : window.registerTurnstileToken;
+}
 
+function resetTurnstile(type) {
+  if (typeof turnstile === "undefined") return;
+
+  const widgetId = type === "login"
+    ? window.loginTurnstileId
+    : window.registerTurnstileId;
+
+  if (widgetId !== null) {
+    turnstile.reset(widgetId);
+  }
+
+  if (type === "login") {
+    window.loginTurnstileToken = "";
+  } else {
+    window.registerTurnstileToken = "";
+  }
+}
 function showAuth(mode = "login") {
   $("authView").classList.remove("hidden");
   $("pendingView").classList.add("hidden");
@@ -92,12 +114,20 @@ $("registerTab").onclick = () => showAuth("register");
 $("loginForm").addEventListener("submit", async e => {
   e.preventDefault();
 
+  const captchaToken = getTurnstileToken("login");
+
+  if (!captchaToken) {
+    toast("Completá la verificación de seguridad.");
+    return;
+  }
+
   try {
     const result = await api("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({
         username: $("loginUser").value,
-        password: $("loginPassword").value
+        password: $("loginPassword").value,
+        turnstileToken: captchaToken
       })
     });
 
@@ -108,7 +138,9 @@ $("loginForm").addEventListener("submit", async e => {
 
     showApp(result.user);
     toast("¡Bienvenido/a!");
+
   } catch (err) {
+    resetTurnstile("login");
     toast(err.message);
   }
 });
@@ -119,21 +151,35 @@ $("registerForm").addEventListener("submit", async e => {
   const p = $("registerPassword").value;
   const p2 = $("registerPassword2").value;
 
-  if (p !== p2) return toast("Las contraseñas no coinciden.");
+  if (p !== p2) {
+    toast("Las contraseñas no coinciden.");
+    return;
+  }
+
+  const captchaToken = getTurnstileToken("register");
+
+  if (!captchaToken) {
+    toast("Completá la verificación de seguridad.");
+    return;
+  }
 
   try {
     const result = await api("/api/auth/register", {
       method: "POST",
       body: JSON.stringify({
         fullName: $("registerName").value,
-        password: p
+        password: p,
+        turnstileToken: captchaToken
       })
     });
 
     $("registerForm").reset();
+    resetTurnstile("register");
     showAuth("login");
     toast(result.message);
+
   } catch (err) {
+    resetTurnstile("register");
     toast(err.message);
   }
 });
