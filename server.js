@@ -180,6 +180,9 @@ function initSchema() {
   if (!existingColumns.includes("match_time")) {
     run("ALTER TABLE tournament_challenges ADD COLUMN match_time TEXT DEFAULT ''");
   }
+  if (!existingColumns.includes("score_edit_used")) {
+  run("ALTER TABLE tournament_challenges ADD COLUMN score_edit_used INTEGER NOT NULL DEFAULT 0");
+}
 
   run(`CREATE INDEX IF NOT EXISTS idx_challenges_tournament_category
     ON tournament_challenges(tournament_id, category_id, status)`);
@@ -1485,7 +1488,6 @@ app.patch("/api/challenges/:id/cancel", requireApproved, (req, res) => {
 // -----------------------------------------------------
 // GUARDAR RESULTADO DEL PARTIDO
 // -----------------------------------------------------
-
 app.put("/api/challenges/:id/score", requireApproved, (req, res) => {
   const challengeId = Number(req.params.id);
 
@@ -1497,12 +1499,6 @@ app.put("/api/challenges/:id/score", requireApproved, (req, res) => {
   if (!challenge) {
     return res.status(404).json({
       error: "No encontramos ese partido."
-    });
-  }
-
-  if (challenge.status !== "playing") {
-    return res.status(409).json({
-      error: "El partido no está en curso."
     });
   }
 
@@ -1518,7 +1514,22 @@ app.put("/api/challenges/:id/score", requireApproved, (req, res) => {
 
   if (!allowed) {
     return res.status(403).json({
-      error: "Solo los jugadores de las parejas participantes pueden cargar el resultado."
+      error: "Solo los jugadores de las parejas participantes pueden editar el resultado."
+    });
+  }
+
+  const isPlaying = challenge.status === "playing";
+  const isEditing = challenge.status === "completed";
+
+  if (!isPlaying && !isEditing) {
+    return res.status(409).json({
+      error: "Este partido no permite cargar o editar resultados."
+    });
+  }
+
+  if (isEditing && Number(challenge.score_edit_used) === 1) {
+    return res.status(409).json({
+      error: "Este resultado ya fue editado. Solo se permite una edición."
     });
   }
 
@@ -1538,13 +1549,48 @@ app.put("/api/challenges/:id/score", requireApproved, (req, res) => {
     });
   }
 
-  run(
-    `UPDATE tournament_challenges
-     SET set1 = ?, set2 = ?, set3 = ?
-     WHERE id = ?
-       AND status = 'playing'`,
-    [set1, set2, set3, challengeId]
-  );
+  if (isPlaying) {
+    run(
+      `UPDATE tournament_challenges
+       SET set1 = ?, set2 = ?, set3 = ?
+       WHERE id = ?
+         AND status = 'playing'`,
+      [set1, set2, set3, challengeId]
+    );
+  } else {
+    let winnerSide;
+
+    try {
+      winnerSide = calculateMatch(set1, set2, set3);
+    } catch (error) {
+      return res.status(400).json({
+        error: "El resultado de los sets no es válido."
+      });
+    }
+
+    const winnerRegistrationId = winnerSide === 1
+      ? challenge.creator_registration_id
+      : challenge.opponent_registration_id;
+
+    run(
+  `UPDATE tournament_challenges
+   SET set1 = ?,
+       set2 = ?,
+       set3 = ?,
+       winner_registration_id = ?,
+       score_edit_used = 1
+   WHERE id = ?
+     AND status = 'completed'
+     AND COALESCE(score_edit_used, 0) = 0`,
+  [set1, set2, set3, winnerRegistrationId, challengeId]
+);
+
+if (db.getRowsModified() === 0) {
+  return res.status(409).json({
+    error: "Otro jugador ya utilizó la edición de este resultado."
+  });
+}
+  }
 
   saveDatabase();
 

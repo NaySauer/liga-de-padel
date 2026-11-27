@@ -1021,16 +1021,28 @@ async function loadChallengeBoard(tournamentId, categoryId) {
       </div>`;
     }
 
-    const finished = related.filter(match => match.status === "completed").map(match => {
-      const creator = pairs.find(pair => Number(pair.id) === Number(match.creator_registration_id));
-      const opponent = pairs.find(pair => Number(pair.id) === Number(match.opponent_registration_id));
-      return `<div class="notice-inline">
-        <strong>${esc(challengePairName(creator))} vs. ${esc(challengePairName(opponent))}</strong>
-                ${challengeDetails(match)}
-        <p>${esc([match.set1, match.set2, match.set3].filter(Boolean).join(" · "))}</p>
-        <span class="state approved">Finalizado</span>
-      </div>`;
-    }).join("");
+   const finished = related.filter(match => match.status === "completed").map(match => {
+  const creator = pairs.find(pair => Number(pair.id) === Number(match.creator_registration_id));
+  const opponent = pairs.find(pair => Number(pair.id) === Number(match.opponent_registration_id));
+
+  const editButton = Number(match.score_edit_used) === 0
+  ? `<button class="button primary full" type="button"
+       data-edit-score="${match.id}"
+       data-set1="${esc(match.set1 || "")}"
+       data-set2="${esc(match.set2 || "")}"
+       data-set3="${esc(match.set3 || "")}">
+       EDITAR RESULTADO
+     </button>`
+  : `<span class="state rejected">Edición utilizada</span>`;
+
+  return `<div class="notice-inline">
+    <strong>${esc(challengePairName(creator))} vs. ${esc(challengePairName(opponent))}</strong>
+    ${challengeDetails(match)}
+    <p>${esc([match.set1, match.set2, match.set3].filter(Boolean).join(" · "))}</p>
+    <span class="state approved">Finalizado</span>
+    ${editButton}
+  </div>`;
+}).join("");
 
     content.innerHTML = `
       <div class="notice-inline">
@@ -1274,6 +1286,58 @@ $("playerTournaments").addEventListener("click", async e => {
 
     return;
   }
+    // EDITAR RESULTADO FINALIZADO (UNA SOLA VEZ)
+  const editScoreButton = e.target.closest("[data-edit-score]");
+
+  if (editScoreButton) {
+    const matchId = editScoreButton.dataset.editScore;
+    const area = editScoreButton.closest(".challenge-area");
+
+    const set1 = window.prompt(
+      "Corregí el primer set (ejemplo: 6-4):",
+      editScoreButton.dataset.set1
+    );
+    if (set1 === null) return;
+
+    const set2 = window.prompt(
+      "Corregí el segundo set (ejemplo: 3-6):",
+      editScoreButton.dataset.set2
+    );
+    if (set2 === null) return;
+
+    const set3 = window.prompt(
+      "Tercer set (dejalo vacío si no hubo):",
+      editScoreButton.dataset.set3
+    );
+    if (set3 === null) return;
+
+    if (!window.confirm("¿Confirmás guardar la corrección? Esta edición no se podrá repetir.")) {
+      return;
+    }
+
+    try {
+      await api(`/api/challenges/${matchId}/score`, {
+        method: "PUT",
+        body: JSON.stringify({
+          set1: set1.trim(),
+          set2: set2.trim(),
+          set3: set3.trim()
+        })
+      });
+
+      toast("Resultado corregido correctamente.");
+
+      await loadChallengeBoard(
+        area.id.replace("challenge-area-", ""),
+        area.querySelector("[data-challenge-category]").value
+      );
+
+    } catch (err) {
+      toast(err.message);
+    }
+
+    return;
+  } 
 
   // GUARDAR RESULTADO O FINALIZAR PARTIDO
   const scoreButton = e.target.closest(
